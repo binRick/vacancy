@@ -47,4 +47,6 @@ func snapshot() -> Dictionary:
 			"pos": [snappedf(pos.x, 0.01), snappedf(pos.y, 0.01), snappedf(pos.z, 0.01)],
 			"yaw_deg": snappedf(player.global_rotation_degrees.y, 0.1),
 		}
+		if player.has_method("telemetry_state"):
+			snap["player"].merge(player.telemetry_state())
 	return snap

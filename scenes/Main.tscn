@@ -1,6 +1,7 @@
-[gd_scene load_steps=7 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -15,12 +16,33 @@ roughness = 0.9
 
 [sub_resource type="BoxMesh" id="BoxMesh_cube"]
 
+[sub_resource type="BoxShape3D" id="BoxShape_cube"]
+
 [sub_resource type="StandardMaterial3D" id="Material_floor"]
 albedo_color = Color(0.32, 0.32, 0.34, 1)
 roughness = 1.0
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
 size = Vector2(20, 20)
+
+[sub_resource type="BoxShape3D" id="BoxShape_floor"]
+size = Vector3(20, 0.2, 20)
+
+[sub_resource type="StandardMaterial3D" id="Material_wall"]
+albedo_color = Color(0.45, 0.45, 0.47, 1)
+roughness = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_ns"]
+size = Vector3(16.3, 3, 0.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_ns"]
+size = Vector3(16.3, 3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_wall_ew"]
+size = Vector3(0.3, 3, 16.3)
+
+[sub_resource type="BoxShape3D" id="BoxShape_wall_ew"]
+size = Vector3(0.3, 3, 16.3)
 
 [node name="Main" type="Node"]
 script = ExtResource("1_main")
@@ -38,18 +60,68 @@ environment = SubResource("Environment_main")
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 6, 4)
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="SubViewport/World"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 4)
-fov = 70.0
+[node name="Player" parent="SubViewport/World" instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 5)
 
-[node name="Floor" type="MeshInstance3D" parent="SubViewport/World"]
+[node name="Floor" type="StaticBody3D" parent="SubViewport/World"]
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/Floor"]
 mesh = SubResource("PlaneMesh_floor")
 surface_material_override/0 = SubResource("Material_floor")
 
-[node name="Cube" type="MeshInstance3D" parent="SubViewport/World"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/Floor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
+shape = SubResource("BoxShape_floor")
+
+[node name="Cube" type="StaticBody3D" parent="SubViewport/World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/Cube"]
 mesh = SubResource("BoxMesh_cube")
 surface_material_override/0 = SubResource("Material_cube")
+
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/Cube"]
+shape = SubResource("BoxShape_cube")
+
+[node name="WallN" type="StaticBody3D" parent="SubViewport/World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, -8)
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/WallN"]
+mesh = SubResource("BoxMesh_wall_ns")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/WallN"]
+shape = SubResource("BoxShape_wall_ns")
+
+[node name="WallS" type="StaticBody3D" parent="SubViewport/World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 8)
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/WallS"]
+mesh = SubResource("BoxMesh_wall_ns")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/WallS"]
+shape = SubResource("BoxShape_wall_ns")
+
+[node name="WallE" type="StaticBody3D" parent="SubViewport/World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/WallE"]
+mesh = SubResource("BoxMesh_wall_ew")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/WallE"]
+shape = SubResource("BoxShape_wall_ew")
+
+[node name="WallW" type="StaticBody3D" parent="SubViewport/World"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1.5, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="SubViewport/World/WallW"]
+mesh = SubResource("BoxMesh_wall_ew")
+surface_material_override/0 = SubResource("Material_wall")
+
+[node name="Collision" type="CollisionShape3D" parent="SubViewport/World/WallW"]
+shape = SubResource("BoxShape_wall_ew")
 
 [node name="Screen" type="TextureRect" parent="."]
 texture_filter = 1
@@ -58,4 +130,24 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
 stretch_mode = 5
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="InteractPrompt" type="Label" parent="UI"]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -64.0
+offset_right = 150.0
+offset_bottom = -38.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 18
+text = "[E] Interact"
+horizontal_alignment = 1
