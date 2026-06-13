@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[node name="FloorBase" type="Node3D"]
+
+[node name="SpawnPoint" type="Marker3D" parent="."]
+
+[node name="Geometry" type="Node3D" parent="."]
+
+[node name="Props" type="Node3D" parent="."]
+
+[node name="Lights" type="Node3D" parent="."]

@@ -1,0 +1,9 @@
+# Vendored raylib source (re-fetched + built by build.sh)
+/vendor/
+
+# Build artifacts
+/build/
+
+# Telemetry / screenshots
+/run.log
+*.png

@@ -1,0 +1,11 @@
+# Godot
+.godot/
+.import/
+export_credentials.cfg
+
+# Builds
+build/
+
+# Telemetry logs from run.sh
+run.log
+*.log
