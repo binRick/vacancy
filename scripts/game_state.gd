@@ -10,6 +10,7 @@ signal note_opened(text: String)
 var descent_depth: int = 0
 var seen_rooms: Dictionary = {}
 var flags: Dictionary = {}
+var current_floor_name: String = ""
 
 ## Registered by the player controller on _ready (step 2). Telemetry reads it.
 var player: Node3D = null
@@ -50,6 +51,7 @@ func mark_room_seen(room_id: String) -> void:
 func snapshot() -> Dictionary:
 	var snap := {
 		"depth": descent_depth,
+		"floor": current_floor_name,
 		"rooms_seen": seen_rooms.size(),
 		"flags": flags,
 	}

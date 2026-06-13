@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/floor_manager.gd" id="6_fm"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/floors/Floor_Lobby.tscn" id="3_lobby"]
 [ext_resource type="Shader" path="res://shaders/post_dither.gdshader" id="4_dither"]
@@ -41,6 +42,10 @@ environment = SubResource("Environment_main")
 
 [node name="Player" parent="SubViewport/World" instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 3)
+
+[node name="FloorManager" type="Node" parent="."]
+process_mode = 1
+script = ExtResource("6_fm")
 
 [node name="DitherViewport" type="SubViewport" parent="."]
 size = Vector2i(320, 240)

@@ -22,6 +22,17 @@ func _door_name() -> String:
 	return String(_hinge.get_parent().name)
 
 
+func is_open() -> bool:
+	return _open
+
+
+## Used by anomalies: put the door in a state silently, no tween.
+func set_open_instant(open: bool) -> void:
+	_open = open
+	prompt_text = "Close" if open else "Open"
+	_hinge.rotation.y = deg_to_rad(open_angle_deg) if open else 0.0
+
+
 func interact(_player: Node3D) -> void:
 	if _busy:
 		return

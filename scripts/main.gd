@@ -39,6 +39,8 @@ func _ready() -> void:
 		elif arg.begins_with("--depth="):  # dev: pretend we already descended N times
 			GameState.descent_depth = arg.trim_prefix("--depth=").to_int()
 			GameState.depth_changed.emit(GameState.descent_depth)
+		elif arg == "--sublevel":  # dev: boot straight onto a sublevel floor
+			$FloorManager.dev_swap_to_sublevel()
 		elif arg == "--selftest":
 			_run_selftest()
 
@@ -101,10 +103,11 @@ func _capture_and_quit(path: String) -> void:
 	get_tree().quit()
 
 
-## Dev helper: exercise doors, the note, and the elevator without input;
-## verify via the telemetry log. Run: godot --path . -- --selftest
+## Dev helper: exercise doors, the note, and two full descents without
+## input; verify via the telemetry log. Run: godot --path . -- --selftest
 func _run_selftest() -> void:
-	var lobby := $SubViewport/World/Floor_Lobby
+	var fm: FloorManager = $FloorManager
+	var lobby := fm.current_floor
 	await get_tree().create_timer(0.5).timeout
 	lobby.get_node("Props/StorageDoor/Hinge/Panel").interact(player)
 	lobby.get_node("Props/ExitDoorL/Hinge/Panel").interact(player)
@@ -114,6 +117,11 @@ func _run_selftest() -> void:
 	var elevator := lobby.get_node("Props/Elevator")
 	elevator.open_doors()
 	await get_tree().create_timer(1.6).timeout
+	# stand in the cab so the relative teleport during the swap is realistic
+	player.global_position = elevator.global_position + Vector3(0, 0.1, -1.2)
 	elevator.get_node("InsideButton").interact(player)
-	await get_tree().create_timer(7.0).timeout
+	await get_tree().create_timer(8.0).timeout
+	# ride again from the sublevel (its doors are already open)
+	fm.current_floor.get_node("Props/Elevator/InsideButton").interact(player)
+	await get_tree().create_timer(8.0).timeout
 	get_tree().quit()
