@@ -33,7 +33,9 @@ measured from the two implementations in this repo, not from general reputation.
 | **What the engine gives you** | physics, audio buses, scene tree, tweens, lighting+shadows, UI, import | a window, GL, input, audio mixer, math |
 | **Shipping binary** | 68 MB (engine embedded) | **1.7 MB** (static raylib) |
 | **Runtime deps** | none (self-contained) | system frameworks only (OpenGL, Cocoa) |
-| **Frame rate (this game)** | 60 fps locked, easily | 60 fps locked; **hundreds uncapped** |
+| **Frame rate (this game)** | 60 fps locked | 60 fps locked |
+| **CPU work per frame** | ~2.3 ms | **~0.35 ms** (~6–7× lighter) |
+| **CPU% at locked 60 fps** | ~11–12% | ~11–12% (a wash) |
 | **Cold start → first frame** | ~0.6 s | **~0.4 s** |
 | **Peak memory (max RSS)** | ~235 MB | **~90 MB** |
 | **Build toolchain** | Godot editor (~100 MB app) | any C compiler (already on every dev box) |
@@ -198,14 +200,13 @@ is hidden, the compiler gates every change).** And whichever engine you pick,
 This game deliberately renders its 3D world at **320×240** and upscales, so it is
 trivially cheap for either engine — neither breaks a sweat.
 
-- **raylib port (measured):** with the 60 fps cap removed, the telemetry heartbeat
-  reported instantaneous frame rates in the **200–600+ fps** range on this Mac.
-  The whole scene is a few dozen un-instanced boxes and ≤8 lights per room; the
-  bottleneck is nowhere near the CPU/GPU.
-- **Godot:** locks to 60 fps just as easily. Its Forward+ renderer carries more
-  baseline per-frame and per-process overhead (a full scene tree, servers,
-  physics step, more threads), but at this scale it's irrelevant — both sit at the
-  cap with enormous headroom.
+- **raylib port:** the whole scene is a few dozen un-instanced boxes and ≤8 lights
+  per room, so it costs the render loop **~0.35 ms of CPU per frame** (measured) —
+  the bottleneck is nowhere near the CPU/GPU.
+- **Godot:** its Forward+ renderer carries more baseline per-frame and per-process
+  overhead (a full scene tree, servers, a physics tick, more threads), costing
+  **~2.3 ms of CPU per frame** for the same scene — ~6–7× more, but at a 60 fps lock
+  still a rounding error.
 
 **Where it would matter:** raylib's floor is lower — smaller resident memory, near-
 instant startup, less per-frame engine tax — so on constrained hardware (handhelds,
@@ -214,8 +215,43 @@ runway before you must optimize. Godot's ceiling is higher *with less work* —
 once you want real shadows, GI, large streamed worlds, or a physics-heavy scene,
 you'd reimplement a lot of engine in C to keep up.
 
-For *Vacancy specifically*: **performance is a wash; both lock 60.** Startup and
-memory, though, are *not* a wash.
+For *Vacancy specifically*: **at a 60 fps lock, performance is a wash** — but the
+*cost* of hitting that lock, and the startup/memory floor, are not.
+
+### Frame rate & CPU cost (measured)
+
+Measured on this machine (Apple Silicon, macOS). Uncapped frame rate and per-frame
+CPU come from a **startup-free 2-point slope** (wall time and CPU time across
+N=500 vs N=5000 frames for raylib, N=200 vs N=900 for Godot, via `/usr/bin/time`);
+CPU% is `ps`-sampled while each runs locked at 60 fps.
+
+| | Godot | raylib |
+|---|---:|---:|
+| Uncapped frame rate | ~78 fps | ~1,600 fps |
+| CPU time per rendered frame | ~2.3 ms | **~0.35 ms** |
+| CPU% at a locked 60 fps | ~11–12% | ~11–12% |
+
+Read these carefully — the naive take ("raylib is 20× faster!") is wrong:
+
+- **Uncapped fps is not an engine comparison here.** macOS composites visible
+  windows at the display refresh, and Godot honors that even with `--disable-vsync`
+  (its own help text notes the flag "does not override driver-level V-Sync"), so it
+  pins at the ~78 Hz panel. raylib's GL loop happens *not* to honor the compositor
+  cap, so it spins out ~1,600 frames a second — most never shown. That 20× is "who
+  obeys vsync," not throughput.
+- **The honest throughput signal is CPU time per frame: ~0.35 ms vs ~2.3 ms — Godot
+  does roughly 6–7× the work to produce one frame** of this scene (scene tree,
+  servers, physics tick, more threads vs. a flat draw loop).
+- **Yet at a locked 60 fps, measured CPU% is a wash (~11–12% each).** At only 60
+  frames/sec the per-frame compute gap (≈2 ms × 60 ≈ 0.12 s/s vs ~0.02 s/s) is
+  swamped by the fixed per-frame overhead *both* pay — vsync sync, the audio
+  callback, the GL driver. The engine-cost difference is real but invisible until
+  you push frames. (`ps %cpu` is noisy at this level; treat ~11–12% as "single
+  digits to low teens, indistinguishable.")
+
+So the 6–7× per-frame CPU advantage is **latent headroom**: irrelevant at 60 fps on
+a Mac, but it's what lets the C build hold a high refresh rate, run on a weak CPU,
+or absorb far more on-screen geometry before it has to start dropping frames.
 
 ### Startup time & memory (measured)
 
