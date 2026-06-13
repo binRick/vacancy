@@ -4,6 +4,8 @@ extends Node
 ## (interact prompt, captions, note overlay).
 
 @onready var sub_viewport: SubViewport = $SubViewport
+@onready var dither_viewport: SubViewport = $DitherViewport
+@onready var dither_rect: TextureRect = $DitherViewport/DitherRect
 @onready var screen: TextureRect = $Screen
 @onready var prompt_label: Label = $UI/InteractPrompt
 @onready var caption_label: Label = $UI/Caption
@@ -18,10 +20,14 @@ func _ready() -> void:
 	# Main stays live while the tree pauses (note overlay needs input);
 	# the SubViewport subtree is explicitly PAUSABLE in the scene.
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	screen.texture = sub_viewport.get_texture()
+	# Post chain (SPEC §7): 3D world (320x240) -> dither pass at internal
+	# res -> VHS/CRT shader on the upscaled image. UI draws crisp above.
+	dither_rect.texture = sub_viewport.get_texture()
+	screen.texture = dither_viewport.get_texture()
 	player.interact_target_changed.connect(_on_interact_target_changed)
 	GameState.caption_shown.connect(_on_caption_shown)
 	GameState.note_opened.connect(_on_note_opened)
+	GameState.depth_changed.connect(_on_depth_changed)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
 			_capture_and_quit(arg.trim_prefix("--screenshot="))
@@ -30,6 +36,9 @@ func _ready() -> void:
 			if p.size() == 3:
 				player.global_position = Vector3(p[0].to_float(), 0.1, p[1].to_float())
 				player.rotation_degrees.y = p[2].to_float()
+		elif arg.begins_with("--depth="):  # dev: pretend we already descended N times
+			GameState.descent_depth = arg.trim_prefix("--depth=").to_int()
+			GameState.depth_changed.emit(GameState.descent_depth)
 		elif arg == "--selftest":
 			_run_selftest()
 
@@ -51,6 +60,12 @@ func _on_interact_target_changed(target: Node) -> void:
 	var prompt: String = target.prompt_text if "prompt_text" in target else "Interact"
 	prompt_label.text = "[E] %s" % prompt
 	prompt_label.show()
+
+
+## The VHS degrades as the building does (SPEC §7).
+func _on_depth_changed(depth: int) -> void:
+	var mat: ShaderMaterial = screen.material
+	mat.set_shader_parameter("intensity", clampf(0.18 + 0.08 * depth, 0.0, 1.0))
 
 
 func _on_caption_shown(text: String) -> void:
@@ -75,12 +90,14 @@ func _close_note() -> void:
 	Telemetry.event("note_closed")
 
 
-## Dev helper: dump one frame of the internal 320x240 render to a PNG and exit.
+## Dev helper: dump the final post-processed window to <path> and the raw
+## internal 320x240 render to <path>_raw.png, then exit.
 func _capture_and_quit(path: String) -> void:
 	await get_tree().create_timer(1.0).timeout
-	var err := sub_viewport.get_texture().get_image().save_png(path)
+	var err := get_viewport().get_texture().get_image().save_png(path)
 	if err != OK:
 		push_error("screenshot failed: %s" % error_string(err))
+	sub_viewport.get_texture().get_image().save_png(path.replace(".png", "_raw.png"))
 	get_tree().quit()
 
 

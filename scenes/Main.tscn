@@ -1,8 +1,21 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
 [ext_resource type="PackedScene" path="res://scenes/floors/Floor_Lobby.tscn" id="3_lobby"]
+[ext_resource type="Shader" path="res://shaders/post_dither.gdshader" id="4_dither"]
+[ext_resource type="Shader" path="res://shaders/post_vhs_crt.gdshader" id="5_vhs"]
+
+[sub_resource type="ShaderMaterial" id="Material_dither"]
+shader = ExtResource("4_dither")
+shader_parameter/color_levels = 32
+shader_parameter/dither_strength = 1.0
+
+[sub_resource type="ShaderMaterial" id="Material_vhs"]
+shader = ExtResource("5_vhs")
+shader_parameter/intensity = 0.18
+shader_parameter/scanline_strength = 0.3
+shader_parameter/barrel = 0.05
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -29,8 +42,18 @@ environment = SubResource("Environment_main")
 [node name="Player" parent="SubViewport/World" instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 3)
 
+[node name="DitherViewport" type="SubViewport" parent="."]
+size = Vector2i(320, 240)
+render_target_update_mode = 4
+
+[node name="DitherRect" type="TextureRect" parent="DitherViewport"]
+material = SubResource("Material_dither")
+offset_right = 320.0
+offset_bottom = 240.0
+
 [node name="Screen" type="TextureRect" parent="."]
 texture_filter = 1
+material = SubResource("Material_vhs")
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
