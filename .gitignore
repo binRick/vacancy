@@ -1,11 +1,7 @@
-# Godot
-.godot/
-.import/
-export_credentials.cfg
+# Engine-agnostic root. Each implementation has its own .gitignore:
+#   godot-port/.gitignore   (.godot/, build/, logs)
+#   raylib-port/.gitignore  (vendored raylib, build/, screenshots)
 
-# Builds
-build/
-
-# Telemetry logs from run.sh
-run.log
-*.log
+# OS / editor cruft
+.DS_Store
+*.swp
