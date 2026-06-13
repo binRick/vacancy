@@ -48,6 +48,8 @@ size = Vector3(0.55, 0.55, 0.55)
 size = Vector3(0.55, 0.55, 0.55)
 
 [node name="Floor_Sublevel" instance=ExtResource("1_base")]
+metadata/surface = "concrete"
+metadata/space = "corridor"
 
 [node name="SpawnPoint" parent="." index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, -9)

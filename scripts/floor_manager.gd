@@ -16,11 +16,19 @@ var _rumble := AudioStreamPlayer.new()
 
 func _ready() -> void:
 	_rumble.volume_db = -6.0
+	_rumble.bus = "Sfx"
 	add_child(_rumble)
 	current_floor = _world.get_node("Floor_Lobby")
 	GameState.current_floor_name = String(current_floor.name)
 	GameState.mark_room_seen(String(current_floor.name))
+	_apply_floor_meta(current_floor)
 	_hook(current_floor)
+
+
+## Surface tag drives footstep timbre; space tag drives reverb character.
+func _apply_floor_meta(floor_node: Node3D) -> void:
+	GameState.current_surface = floor_node.get_meta("surface", "tile")
+	AudioDirector.set_space(floor_node.get_meta("space", "room"))
 
 
 func _hook(floor_node: Node3D) -> void:
@@ -52,6 +60,7 @@ func _on_descent_requested(elevator: Elevator) -> void:
 	GameState.descend()
 	GameState.current_floor_name = String(next.name)
 	GameState.mark_room_seen(String(next.name))
+	_apply_floor_meta(next)
 	LoopController.apply(next, GameState.descent_depth)
 	_hook(next)
 	await get_tree().create_timer(RIDE_SECONDS * 0.45, false).timeout
@@ -76,6 +85,7 @@ func dev_swap_to_sublevel() -> void:
 	_world.add_child(next)
 	GameState.current_floor_name = String(next.name)
 	GameState.mark_room_seen(String(next.name))
+	_apply_floor_meta(next)
 	LoopController.apply(next, maxi(GameState.descent_depth, 1))
 	_hook(next)
 	GameState.player.global_position = \

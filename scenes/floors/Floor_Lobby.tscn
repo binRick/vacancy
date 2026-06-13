@@ -42,6 +42,8 @@ shader_parameter/snap_resolution = Vector2(320, 240)
 shader_parameter/affine = 1.0
 
 [node name="Floor_Lobby" instance=ExtResource("1_base")]
+metadata/surface = "tile"
+metadata/space = "room"
 
 [node name="SpawnPoint" parent="." index="0"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 3)

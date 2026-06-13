@@ -21,6 +21,7 @@ static func apply(floor_node: Node3D, depth: int) -> void:
 	# differs from its first appearance (seen_rooms is the memory).
 	var visits: int = GameState.seen_rooms.get(String(floor_node.name), 0)
 	rng.seed = hash("vacancy:%d:%d:%s" % [depth, visits, floor_node.name])
+	rng.randf()  # discard: the first draw after seeding is biased high
 	# ~1-2 anomalies early, up to 4 deep down.
 	var budget := clampi((depth + 1) / 2, 1, 4)
 	var pool: Array = []
@@ -43,5 +44,6 @@ static func apply(floor_node: Node3D, depth: int) -> void:
 		pool.erase(pick)
 		if pick.apply(floor_node, depth, rng):
 			applied.append(pick.id)
+			GameState.anomaly_applied.emit(pick.id)
 			budget -= 1
 	Telemetry.event("anomalies", {"depth": depth, "applied": applied})

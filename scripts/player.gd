@@ -39,7 +39,7 @@ var _mouse_captured_at_msec := -10_000
 
 func _ready() -> void:
 	GameState.player = self
-	footsteps.stream = SoundSynth.footstep()
+	footsteps.bus = "Sfx"
 	interact_ray.add_exception(self)
 	_last_pos = global_position
 	_capture_mouse()
@@ -135,6 +135,9 @@ func _update_bob_and_footsteps(delta: float) -> void:
 
 
 func _play_footstep() -> void:
+	# Regenerated per step: the synth's internal noise gives natural variation,
+	# and the surface tag (from the current floor) changes the timbre.
+	footsteps.stream = SoundSynth.footstep(GameState.current_surface)
 	footsteps.pitch_scale = randf_range(0.95, 1.05)
 	footsteps.volume_db = randf_range(-14.0, -11.0)
 	footsteps.play()

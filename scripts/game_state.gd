@@ -6,11 +6,13 @@ signal depth_changed(new_depth: int)
 signal flag_set(flag: String, value: Variant)
 signal caption_shown(text: String)
 signal note_opened(text: String)
+signal anomaly_applied(id: String)
 
 var descent_depth: int = 0
 var seen_rooms: Dictionary = {}
 var flags: Dictionary = {}
 var current_floor_name: String = ""
+var current_surface: String = "tile"
 
 ## Registered by the player controller on _ready (step 2). Telemetry reads it.
 var player: Node3D = null
@@ -54,6 +56,7 @@ func snapshot() -> Dictionary:
 		"floor": current_floor_name,
 		"rooms_seen": seen_rooms.size(),
 		"flags": flags,
+		"master_db": snappedf(AudioServer.get_bus_volume_db(0), 0.1),
 	}
 	if is_instance_valid(player):
 		var pos: Vector3 = player.global_position

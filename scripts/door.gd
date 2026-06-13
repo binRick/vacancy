@@ -18,6 +18,10 @@ var _busy := false
 @onready var _audio: AudioStreamPlayer3D = $Audio
 
 
+func _ready() -> void:
+	_audio.bus = "Sfx"
+
+
 func _door_name() -> String:
 	return String(_hinge.get_parent().name)
 

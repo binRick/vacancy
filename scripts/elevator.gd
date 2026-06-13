@@ -19,6 +19,10 @@ var _busy := false
 @onready var _closed_r_x: float = _door_r.position.x
 
 
+func _ready() -> void:
+	_audio.bus = "Sfx"
+
+
 func open_doors() -> void:
 	if _busy or _doors_open:
 		return
