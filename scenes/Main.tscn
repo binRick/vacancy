@@ -1,7 +1,10 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=18 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
+[ext_resource type="Shader" path="res://shaders/psx_vertex_snap.gdshader" id="3_psx"]
+[ext_resource type="Texture2D" path="res://assets/checker.png" id="4_checker"]
+[ext_resource type="Texture2D" path="res://assets/panel.png" id="5_panel"]
 
 [sub_resource type="Environment" id="Environment_main"]
 background_mode = 1
@@ -10,36 +13,57 @@ ambient_light_source = 2
 ambient_light_color = Color(0.6, 0.62, 0.68, 1)
 ambient_light_energy = 0.25
 
-[sub_resource type="StandardMaterial3D" id="Material_cube"]
-albedo_color = Color(0.58, 0.58, 0.6, 1)
-roughness = 0.9
+[sub_resource type="ShaderMaterial" id="Material_floor"]
+shader = ExtResource("3_psx")
+shader_parameter/albedo_color = Color(1, 1, 1, 1)
+shader_parameter/albedo_texture = ExtResource("4_checker")
+shader_parameter/uv_scale = Vector2(10, 10)
+shader_parameter/snap_resolution = Vector2(320, 240)
+shader_parameter/affine = 1.0
+
+[sub_resource type="ShaderMaterial" id="Material_wall"]
+shader = ExtResource("3_psx")
+shader_parameter/albedo_color = Color(1, 1, 1, 1)
+shader_parameter/albedo_texture = ExtResource("5_panel")
+shader_parameter/uv_scale = Vector2(8, 2)
+shader_parameter/snap_resolution = Vector2(320, 240)
+shader_parameter/affine = 1.0
+
+[sub_resource type="ShaderMaterial" id="Material_cube"]
+shader = ExtResource("3_psx")
+shader_parameter/albedo_color = Color(1.2, 1.2, 1.25, 1)
+shader_parameter/albedo_texture = ExtResource("4_checker")
+shader_parameter/uv_scale = Vector2(2, 2)
+shader_parameter/snap_resolution = Vector2(320, 240)
+shader_parameter/affine = 1.0
 
 [sub_resource type="BoxMesh" id="BoxMesh_cube"]
+subdivide_width = 1
+subdivide_height = 1
+subdivide_depth = 1
 
 [sub_resource type="BoxShape3D" id="BoxShape_cube"]
 
-[sub_resource type="StandardMaterial3D" id="Material_floor"]
-albedo_color = Color(0.32, 0.32, 0.34, 1)
-roughness = 1.0
-
 [sub_resource type="PlaneMesh" id="PlaneMesh_floor"]
 size = Vector2(20, 20)
+subdivide_width = 9
+subdivide_depth = 9
 
 [sub_resource type="BoxShape3D" id="BoxShape_floor"]
 size = Vector3(20, 0.2, 20)
 
-[sub_resource type="StandardMaterial3D" id="Material_wall"]
-albedo_color = Color(0.45, 0.45, 0.47, 1)
-roughness = 1.0
-
 [sub_resource type="BoxMesh" id="BoxMesh_wall_ns"]
 size = Vector3(16.3, 3, 0.3)
+subdivide_width = 7
+subdivide_height = 2
 
 [sub_resource type="BoxShape3D" id="BoxShape_wall_ns"]
 size = Vector3(16.3, 3, 0.3)
 
 [sub_resource type="BoxMesh" id="BoxMesh_wall_ew"]
 size = Vector3(0.3, 3, 16.3)
+subdivide_height = 2
+subdivide_depth = 7
 
 [sub_resource type="BoxShape3D" id="BoxShape_wall_ew"]
 size = Vector3(0.3, 3, 16.3)
