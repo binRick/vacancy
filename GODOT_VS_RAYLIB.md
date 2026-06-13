@@ -34,6 +34,8 @@ measured from the two implementations in this repo, not from general reputation.
 | **Shipping binary** | 68 MB (engine embedded) | **1.7 MB** (static raylib) |
 | **Runtime deps** | none (self-contained) | system frameworks only (OpenGL, Cocoa) |
 | **Frame rate (this game)** | 60 fps locked, easily | 60 fps locked; **hundreds uncapped** |
+| **Cold start → first frame** | ~0.6 s | **~0.4 s** |
+| **Peak memory (max RSS)** | ~235 MB | **~90 MB** |
 | **Build toolchain** | Godot editor (~100 MB app) | any C compiler (already on every dev box) |
 | **How it was built w/ Claude** | greenfield from spec, 10 incremental steps, 12 commits | one-session port of the finished game |
 
@@ -212,7 +214,41 @@ runway before you must optimize. Godot's ceiling is higher *with less work* —
 once you want real shadows, GI, large streamed worlds, or a physics-heavy scene,
 you'd reimplement a lot of engine in C to keep up.
 
-For *Vacancy specifically*: **performance is a wash; both lock 60.**
+For *Vacancy specifically*: **performance is a wash; both lock 60.** Startup and
+memory, though, are *not* a wash.
+
+### Startup time & memory (measured)
+
+Measured on this machine (Apple Silicon, macOS) with `/usr/bin/time -l` wrapped
+around each binary quitting after a fixed number of frames (`--quit-after`).
+Startup = process exec → first frame → exit (warm, median of 3 runs); memory =
+peak resident set size (max RSS) over a 300-frame steady run.
+
+| | Godot | raylib | Ratio |
+|---|---:|---:|:--|
+| Cold start → first frame | ~0.63 s | **~0.38 s** | raylib ~1.6× faster |
+| Peak memory (max RSS) | ~235 MB | **~90 MB** | Godot ~2.6× more |
+| Shipping binary | 68 MB | 1.7 MB | Godot ~40× larger |
+
+Two honest caveats on the absolute numbers:
+
+- **macOS RSS counts shared framework pages**, so *both* figures are inflated —
+  even a trivial GUI app shows tens of MB of mapped Cocoa/OpenGL/Metal. The ~2.6×
+  *ratio* is the real signal, not the raw megabytes. (Of the raylib build's 90 MB,
+  most is shared GL/Cocoa framework pages, not the game's own ~few-MB of textures,
+  meshes, and audio buffers.)
+- **Godot is measured via the Homebrew engine binary running the project in game
+  mode**, not the 68 MB *exported* binary (which is Linux x86_64 and won't run on
+  this Mac). An export strips the editor subsystems, so a shipped Godot build would
+  likely land somewhat lower than 235 MB — but still comfortably above the C build,
+  and the relative shape holds.
+
+**Takeaway:** the raylib build reaches its first frame in roughly **two-thirds the
+time** and holds about **a third of the resident memory** of the Godot build.
+Neither is slow — both cold-start in well under a second — but the C binary's floor
+is materially lower. That gap is irrelevant for a desktop walking sim and decisive
+on constrained hardware (handhelds, kiosks, embedded), for fast-launch CLI-style
+tools, or anywhere you pay the startup cost thousands of times.
 
 ---
 
