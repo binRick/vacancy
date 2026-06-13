@@ -7,12 +7,15 @@ signal flag_set(flag: String, value: Variant)
 signal caption_shown(text: String)
 signal note_opened(text: String)
 signal anomaly_applied(id: String)
+signal false_exit_used
 
 var descent_depth: int = 0
 var seen_rooms: Dictionary = {}
 var flags: Dictionary = {}
 var current_floor_name: String = ""
 var current_surface: String = "tile"
+var last_note_final: bool = false
+var false_exit_target: Transform3D = Transform3D.IDENTITY
 
 ## Registered by the player controller on _ready (step 2). Telemetry reads it.
 var player: Node3D = null
@@ -40,7 +43,9 @@ func show_caption(text: String) -> void:
 
 
 ## Full-screen readable note overlay; main.gd renders it and pauses the world.
-func open_note(text: String) -> void:
+## A final note ends the game when dismissed (SPEC §6).
+func open_note(text: String, is_final: bool = false) -> void:
+	last_note_final = is_final
 	note_opened.emit(text)
 
 

@@ -120,6 +120,13 @@ func _set_master_db(db: float) -> void:
 	AudioServer.set_bus_volume_db(0, db)
 
 
+## The cut to black takes the sound with it.
+func end_fade(duration: float) -> void:
+	Telemetry.event("audio_end_fade")
+	var tw := create_tween()
+	tw.tween_method(_set_master_db, AudioServer.get_bus_volume_db(0), -60.0, duration)
+
+
 func _exit_tree() -> void:
 	# Stop the bed so its persistent streams release cleanly on shutdown.
 	if is_instance_valid(_hum):

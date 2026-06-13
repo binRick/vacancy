@@ -11,6 +11,8 @@ extends Node
 @onready var caption_label: Label = $UI/Caption
 @onready var note_overlay: Control = $UI/NoteOverlay
 @onready var note_label: Label = $UI/NoteOverlay/Text
+@onready var fade: ColorRect = $UI/Fade
+@onready var end_title: Label = $UI/EndTitle
 @onready var player: CharacterBody3D = $SubViewport/World/Player
 
 var _caption_seq := 0
@@ -28,6 +30,7 @@ func _ready() -> void:
 	GameState.caption_shown.connect(_on_caption_shown)
 	GameState.note_opened.connect(_on_note_opened)
 	GameState.depth_changed.connect(_on_depth_changed)
+	GameState.false_exit_used.connect(_on_false_exit_used)
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
 			_capture_and_quit(arg.trim_prefix("--screenshot="))
@@ -41,8 +44,12 @@ func _ready() -> void:
 			GameState.depth_changed.emit(GameState.descent_depth)
 		elif arg == "--sublevel":  # dev: boot straight onto a sublevel floor
 			$FloorManager.dev_swap_to_sublevel()
+		elif arg == "--ending":  # dev: boot straight onto the wrong final lobby
+			$FloorManager.dev_jump_to_ending()
 		elif arg == "--selftest":
 			_run_selftest()
+		elif arg == "--endtest":
+			_run_endtest()
 
 
 ## The 3D world lives inside a SubViewport, which gets no OS input on its own;
@@ -90,6 +97,40 @@ func _close_note() -> void:
 	note_overlay.hide()
 	get_tree().paused = false
 	Telemetry.event("note_closed")
+	if GameState.last_note_final:
+		_trigger_ending()
+
+
+## Walking out the front doors of the final lobby: a blink to black, and the
+## player is back at the elevator. There is no exit (SPEC §6).
+func _on_false_exit_used() -> void:
+	await _fade_to(1.0, 0.4)
+	player.global_transform = GameState.false_exit_target
+	player.velocity = Vector3.ZERO
+	await get_tree().create_timer(0.35).timeout
+	await _fade_to(0.0, 0.7)
+
+
+func _fade_to(alpha: float, duration: float) -> void:
+	var tw := create_tween()
+	tw.tween_property(fade, "color:a", alpha, duration)
+	await tw.finished
+
+
+## The quiet cut to black. No reveal — just the title, then nothing.
+func _trigger_ending() -> void:
+	if GameState.get_flag("ended"):
+		return
+	GameState.set_flag("ended")
+	Telemetry.event("ending")
+	AudioDirector.end_fade(3.0)
+	await _fade_to(1.0, 3.0)
+	await get_tree().create_timer(2.5).timeout
+	var tw := create_tween()
+	tw.tween_property(end_title, "modulate:a", 0.45, 2.5)
+	await tw.finished
+	await get_tree().create_timer(3.5).timeout
+	get_tree().quit()
 
 
 ## Dev helper: dump the final post-processed window to <path> and the raw
@@ -124,4 +165,20 @@ func _run_selftest() -> void:
 	# ride again from the sublevel (its doors are already open)
 	fm.current_floor.get_node("Props/Elevator/InsideButton").interact(player)
 	await get_tree().create_timer(8.0).timeout
+	get_tree().quit()
+
+
+## Dev: exercise the whole end beat headlessly — jump to the final lobby,
+## walk into the false exit (loop back), then read the final note (cut to
+## black). Verify via the telemetry log.
+func _run_endtest() -> void:
+	var fm: FloorManager = $FloorManager
+	fm.dev_jump_to_ending()
+	await get_tree().create_timer(0.5).timeout
+	player.global_position = Vector3(0, 0.1, 3.9)  # step into the doorway
+	await get_tree().create_timer(1.6).timeout      # trigger + blink + teleport
+	fm.current_floor.get_node("Props/DeskNote").interact(player)
+	await get_tree().create_timer(0.6).timeout
+	_close_note()
+	await get_tree().create_timer(12.0).timeout
 	get_tree().quit()
