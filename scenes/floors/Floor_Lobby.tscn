@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=13 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/floors/FloorBase.tscn" id="1_base"]
 [ext_resource type="Shader" path="res://shaders/psx_vertex_snap.gdshader" id="2_psx"]
@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" path="res://assets/ceiling.png" id="5_ceiling"]
 [ext_resource type="PackedScene" path="res://scenes/props/Door.tscn" id="6_door"]
 [ext_resource type="PackedScene" path="res://scenes/props/Elevator.tscn" id="7_elevator"]
+[ext_resource type="PackedScene" path="res://scenes/props/Note.tscn" id="8_note"]
 
 [sub_resource type="ShaderMaterial" id="Material_floor"]
 shader = ExtResource("2_psx")
@@ -221,6 +222,27 @@ transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 2.85, 0.01, -8)
 
 [node name="Elevator" parent="Props" instance=ExtResource("7_elevator")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0.01, -12.45)
+
+[node name="DeskNote" parent="Props" instance=ExtResource("8_note")]
+transform = Transform3D(0.966, 0, 0.259, 0, 1, 0, -0.259, 0, 0.966, 0.4, 1.11, -1.85)
+text = "SECURITY — EVENING CHECKLIST
+
+- Front entrance locked after last sign-out.  DONE
+- Leave sublevel lights ON for the cleaners.
+- Last sign-out 18:42. No one after.
+
+If the elevator gets called from a sublevel
+after close, do not answer it."
+
+[node name="Panel" parent="Props/ExitDoorL/Hinge"]
+locked = true
+prompt_text = "Exit"
+locked_text = "It's locked. The building closed hours ago."
+
+[node name="Panel" parent="Props/ExitDoorR/Hinge"]
+locked = true
+prompt_text = "Exit"
+locked_text = "It's locked. The building closed hours ago."
 
 [node name="LobbyLight1" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -3, 2.8, 1)

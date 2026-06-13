@@ -14,6 +14,7 @@ var _accum := 0.0
 
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS  # keep heartbeats during pause
 	var path := _resolve_log_path()
 	if path.is_empty():
 		set_process(false)
@@ -48,6 +49,7 @@ func _heartbeat() -> void:
 	var scene := get_tree().current_scene
 	var data := {
 		"fps": Engine.get_frames_per_second(),
+		"paused": get_tree().paused,
 		"scene": String(scene.name) if scene else "<none>",
 	}
 	data.merge(GameState.snapshot())

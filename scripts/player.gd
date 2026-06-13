@@ -27,6 +27,7 @@ var _bob_phase := 0.0  # in cycles
 var _step_accum := 0.0
 var _last_pos := Vector3.ZERO
 var _current_target: Node = null
+var _current_prompt := ""
 var _mouse_captured_at_msec := -10_000
 
 @onready var head: Node3D = $Head
@@ -38,7 +39,7 @@ var _mouse_captured_at_msec := -10_000
 
 func _ready() -> void:
 	GameState.player = self
-	footsteps.stream = _make_footstep_stream()
+	footsteps.stream = SoundSynth.footstep()
 	interact_ray.add_exception(self)
 	_last_pos = global_position
 	_capture_mouse()
@@ -145,8 +146,13 @@ func _update_interact_target() -> void:
 		var hit: Object = interact_ray.get_collider()
 		if hit is Node and hit.has_method("interact"):
 			target = hit
-	if target != _current_target:
+	var prompt := ""
+	if target != null:
+		prompt = target.prompt_text if "prompt_text" in target else "Interact"
+	# Prompt text can change in place (a door flips Open <-> Close).
+	if target != _current_target or prompt != _current_prompt:
 		_current_target = target
+		_current_prompt = prompt
 		interact_target_changed.emit(target)
 
 
@@ -157,22 +163,3 @@ func telemetry_state() -> Dictionary:
 		"speed": snappedf(Vector3(velocity.x, 0.0, velocity.z).length(), 0.01),
 		"target": String(_current_target.name) if _current_target != null else "",
 	}
-
-
-## Placeholder footstep: a short low-passed noise burst with a sharp decay,
-## synthesized once at load (SPEC §8 — placeholder audio until real assets).
-func _make_footstep_stream() -> AudioStreamWAV:
-	var rate := 22050
-	var count := int(rate * 0.14)
-	var data := PackedByteArray()
-	data.resize(count * 2)
-	var lowpassed := 0.0
-	for i in count:
-		var env := pow(1.0 - float(i) / count, 2.5)
-		lowpassed += (randf_range(-1.0, 1.0) - lowpassed) * 0.18
-		data.encode_s16(i * 2, int(clampf(lowpassed * env, -1.0, 1.0) * 0.5 * 32767.0))
-	var wav := AudioStreamWAV.new()
-	wav.format = AudioStreamWAV.FORMAT_16_BITS
-	wav.mix_rate = rate
-	wav.data = data
-	return wav

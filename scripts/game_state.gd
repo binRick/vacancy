@@ -4,6 +4,8 @@ extends Node
 
 signal depth_changed(new_depth: int)
 signal flag_set(flag: String, value: Variant)
+signal caption_shown(text: String)
+signal note_opened(text: String)
 
 var descent_depth: int = 0
 var seen_rooms: Dictionary = {}
@@ -27,6 +29,16 @@ func set_flag(flag: String, value: Variant = true) -> void:
 
 func get_flag(flag: String, default: Variant = false) -> Variant:
 	return flags.get(flag, default)
+
+
+## Brief one-line message at the bottom of the screen ("Locked.").
+func show_caption(text: String) -> void:
+	caption_shown.emit(text)
+
+
+## Full-screen readable note overlay; main.gd renders it and pauses the world.
+func open_note(text: String) -> void:
+	note_opened.emit(text)
 
 
 func mark_room_seen(room_id: String) -> void:
