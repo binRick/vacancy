@@ -5,6 +5,10 @@ This repository contains *Vacancy*, a small PSX/VHS liminal-horror walker, built
 from-scratch **C / raylib 6.0** port (`raylib-port/`). Same game, same layout, same
 systems, same ending — two completely different engines underneath.
 
+Both implementations live side by side on the `main` branch — [`godot-port/`](godot-port/)
+and [`raylib-port/`](raylib-port/) — so the two builds can be checked out and
+diffed directly against each other.
+
 That makes it an unusually clean apples-to-apples comparison. Everything below is
 measured from the two implementations in this repo, not from general reputation.
 
