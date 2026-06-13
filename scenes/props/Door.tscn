@@ -25,6 +25,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0, 0)
 
 [node name="Panel" type="AnimatableBody3D" parent="Hinge"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.05, 0)
+sync_to_physics = false
 script = ExtResource("3_door")
 prompt_text = "Open"
 

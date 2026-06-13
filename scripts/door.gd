@@ -53,6 +53,10 @@ func interact(_player: Node3D) -> void:
 	_audio.pitch_scale = randf_range(0.92, 1.08)
 	_audio.play()
 	Telemetry.event("door", {"door": _door_name(), "open": _open})
+	# We tween the parent Hinge, so the Panel (AnimatableBody3D) moves via an
+	# ancestor transform. That only updates the collider if the Panel has
+	# sync_to_physics = false (set in Door.tscn) — with it true the body keeps
+	# its closed-position collider and the open doorway stays blocked.
 	var target := deg_to_rad(open_angle_deg) if _open else 0.0
 	var tw := create_tween()
 	tw.tween_property(_hinge, "rotation:y", target, swing_seconds) \
