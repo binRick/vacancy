@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Shader" path="res://shaders/psx_vertex_snap.gdshader" id="1_psx"]
+[ext_resource type="Texture2D" path="res://assets/panel.png" id="2_panel"]
+
+[sub_resource type="ShaderMaterial" id="Material_door"]
+shader = ExtResource("1_psx")
+shader_parameter/albedo_color = Color(0.5, 0.42, 0.36, 1)
+shader_parameter/albedo_texture = ExtResource("2_panel")
+shader_parameter/uv_scale = Vector2(1, 1)
+shader_parameter/snap_resolution = Vector2(320, 240)
+shader_parameter/affine = 1.0
+
+[sub_resource type="BoxMesh" id="BoxMesh_panel"]
+size = Vector3(0.9, 2.1, 0.06)
+
+[sub_resource type="BoxShape3D" id="BoxShape_panel"]
+size = Vector3(0.9, 2.1, 0.06)
+
+[node name="Door" type="Node3D"]
+
+[node name="Hinge" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.45, 0, 0)
+
+[node name="Panel" type="AnimatableBody3D" parent="Hinge"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.05, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Hinge/Panel"]
+mesh = SubResource("BoxMesh_panel")
+surface_material_override/0 = SubResource("Material_door")
+
+[node name="Collision" type="CollisionShape3D" parent="Hinge/Panel"]
+shape = SubResource("BoxShape_panel")

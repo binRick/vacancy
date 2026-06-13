@@ -14,6 +14,11 @@ func _ready() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--screenshot="):
 			_capture_and_quit(arg.trim_prefix("--screenshot="))
+		elif arg.begins_with("--pose="):  # dev: x,z,yaw_deg — place player for screenshots
+			var p := arg.trim_prefix("--pose=").split(",")
+			if p.size() == 3:
+				player.global_position = Vector3(p[0].to_float(), 0.1, p[1].to_float())
+				player.rotation_degrees.y = p[2].to_float()
 
 
 ## The 3D world lives inside a SubViewport, which gets no OS input on its own;
