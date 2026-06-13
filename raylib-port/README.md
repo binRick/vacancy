@@ -127,6 +127,7 @@ this repo's walkthrough video.
 | `--endtest` | exercise the end beat (false exit + final note + cut to black), then quit |
 | `--demo` | drive a hands-off first-person walkthrough (lobby → elevator → descend → sublevel) |
 | `--record=DIR` | with `--demo`, dump every other frame (fixed 60 Hz timestep) to `DIR/fNNNNN.png` |
+| `--quit-after=N` | render N frames then exit (used to benchmark startup time / peak memory) |
 
 Telemetry is also enabled by `VACANCY_TELEMETRY_LOG`. The walkthrough GIF/MP4 in
 [`../media/`](../media/) were captured with `--demo --record=…` and encoded with

@@ -10,6 +10,7 @@
 static bool   opt_selftest, opt_endtest, opt_demo;
 static char   opt_screenshot[256];
 static char   opt_record[256];    // dir to dump frames into (with --demo)
+static int    opt_quit_after;     // quit after N rendered frames (benchmarking)
 static int    s_recIndex;
 static float  s_runtime;          // seconds since boot
 static int    s_frame;
@@ -259,6 +260,7 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i],"--endtest")==0) opt_endtest = true;
         else if (strcmp(argv[i],"--demo")==0) opt_demo = true;
         else if (strncmp(argv[i],"--record=",9)==0) snprintf(opt_record,sizeof opt_record,"%s",argv[i]+9);
+        else if (strncmp(argv[i],"--quit-after=",13)==0) opt_quit_after = atoi(argv[i]+13);
         else if (strncmp(argv[i],"--screenshot=",13)==0) snprintf(opt_screenshot,sizeof opt_screenshot,"%s",argv[i]+13);
         else if (strncmp(argv[i],"--pose=",7)==0) {
             float x,z,y; if (sscanf(argv[i]+7,"%f,%f,%f",&x,&z,&y)==3){ pose=(Vector3){x,0,z}; poseYaw=y*DEG2RAD; poseSet=true; }
@@ -349,6 +351,7 @@ int main(int argc, char **argv) {
 
         if (opt_screenshot[0] && s_frame == 40) capture_and_quit();
         if (opt_record[0] && (s_frame % 2 == 0)) record_frame();
+        if (opt_quit_after > 0 && s_frame >= opt_quit_after) s_end = END_QUIT;
     }
 
     telemetry_shutdown();
