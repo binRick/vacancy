@@ -3,6 +3,12 @@
 
 # Build artifacts
 /build/
+/build-web/
+
+# Web (WASM) build artifacts — web/index.html is committed, these are generated
+/web/vacancy.js
+/web/vacancy.wasm
+/web/vacancy.data
 
 # Telemetry / screenshots
 /run.log

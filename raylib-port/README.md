@@ -41,6 +41,33 @@ make              # -> build/vacancy
 
 The binary links only system frameworks (OpenGL, Cocoa/X11) and weighs ~1.7 MB.
 
+### Web (WebAssembly)
+
+The same C sources compile to WebAssembly with [Emscripten](https://emscripten.org/)
+— live at **[vacancy.ximg.app/play](https://vacancy.ximg.app/play/)**. Requires
+`emcc`/`emmake` on `PATH`.
+
+```sh
+./build-web.sh    # builds raylib for WebGL2 + the game -> web/vacancy.{js,wasm,data}
+# serve over HTTP (file:// won't load the .wasm/.data), e.g.:
+python3 -m http.server -d web 8099   # then open http://localhost:8099/
+```
+
+Two web-specific concessions, both isolated to the build:
+
+- **Main loop.** `main.c` hands the frame to `emscripten_set_main_loop()` under
+  `-DPLATFORM_WEB` (the browser owns the frame clock) instead of a blocking
+  `while (!WindowShouldClose())`. The per-frame body is shared between both paths.
+- **Shaders.** raylib's web target is built for **OpenGL ES 3 / WebGL2**, so
+  `build-web.sh` rewrites the desktop shaders' `#version 330` header to
+  `#version 300 es` (plus precision qualifiers). The shader bodies are unchanged —
+  they were already written in the modern `in`/`out`/`texture()` style.
+
+Everything else — the procedural textures, the hand-rolled audio mixer, the PSX +
+dither + VHS post chain — runs identically to the desktop build. `web/index.html`
+is the hand-written page shell (loader, canvas, controls, click-to-start for
+pointer lock + audio); the `vacancy.*` artifacts beside it are generated.
+
 ## Controls
 
 | Input | Action |

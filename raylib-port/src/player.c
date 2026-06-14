@@ -91,7 +91,10 @@ static void collide(Floor *f, Vector3 *p) {
 
 void player_update(Floor *f, float dt, bool allow_input) {
     // -- look --
-    if (allow_input && IsCursorHidden()) {
+    // allow_input already encodes "cursor captured" (IsCursorHidden on desktop,
+    // pointer-lock on web — see input_captured() in main.c); don't re-check
+    // IsCursorHidden() here, which never flips true on the web platform.
+    if (allow_input) {
         Vector2 md = GetMouseDelta();
         player.yaw += md.x*MOUSE_SENS;
         player.pitch -= md.y*MOUSE_SENS;

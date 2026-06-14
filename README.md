@@ -11,6 +11,11 @@
 </p>
 
 <p align="center">
+  <strong>▶ <a href="https://vacancy.ximg.app/play/">Play it in your browser</a></strong>
+  — the raylib / C build, compiled to WebAssembly. No install.
+</p>
+
+<p align="center">
   <a href="media/walkthrough.mp4">▶ Watch the full walkthrough (MP4)</a>
   &nbsp;·&nbsp;
   <strong>Built twice — once in <a href="godot-port/">Godot</a>, once in <a href="raylib-port/">raylib&nbsp;6 / C</a></strong>
@@ -137,6 +142,15 @@ footsteps in sync at any speed; footstep timbre changes with the floor surface.
 cd raylib-port
 ./build.sh        # clones + builds raylib 6.0, then the game
 ./build/vacancy   # run from this directory
+```
+
+**Web (WebAssembly)** — the same C port, built with Emscripten and live at
+**[vacancy.ximg.app/play](https://vacancy.ximg.app/play/)**:
+
+```sh
+cd raylib-port
+./build-web.sh    # builds raylib for WebGL2 + the game into web/
+# then serve web/ over HTTP and open it; see raylib-port/README.md
 ```
 
 **Godot:** open `godot-port/` in Godot 4.6 and press Play, or:

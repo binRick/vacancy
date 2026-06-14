@@ -5,6 +5,17 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#if defined(PLATFORM_WEB)
+#include <emscripten/emscripten.h>
+// On the web "cursor hidden" never flips: DisableCursor() only *requests* pointer
+// lock, which the browser grants asynchronously and only after a user gesture, so
+// raylib's IsCursorHidden() stays false the whole session. The real "is the player
+// captured and playing" signal is the live pointer-lock state, read from the DOM.
+EM_JS(int, web_pointer_locked, (), { return document.pointerLockElement ? 1 : 0; });
+static bool input_captured(void) { return web_pointer_locked() != 0; }
+#else
+static bool input_captured(void) { return IsCursorHidden(); }
+#endif
 
 // ---- dev-flag state -------------------------------------------------------
 static bool   opt_selftest, opt_endtest, opt_demo;
@@ -247,6 +258,69 @@ static void capture_and_quit(void) {
     s_end = END_QUIT;
 }
 
+// One iteration of the game loop. Pulled out of main() so Emscripten can drive
+// it via emscripten_set_main_loop (the browser owns the frame clock; you can't
+// block in an infinite while loop there). On desktop main() calls it in a while.
+static void update_draw_frame(void) {
+    float dt = GetFrameTime();
+    if (dt > 0.1f) dt = 0.1f;
+    if (opt_record[0]) dt = 1.0f/60.0f;   // fixed timestep so capture speed is exact
+    s_runtime += dt; s_frame++;
+
+    bool scripted = opt_selftest || opt_endtest || opt_demo;
+
+    // -- input (skip while scripted) --
+    if (!scripted) {
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            if (ui.noteOpen) close_note();
+            else if (input_captured()) EnableCursor();
+        }
+        if (IsKeyPressed(KEY_E)) {
+            if (ui.noteOpen) close_note();
+            else if (!g_world_paused && s_end==END_NONE) interact_activate(F);
+        }
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !input_captured() && !ui.noteOpen)
+            DisableCursor();
+    }
+
+    bool allow = !scripted && !g_world_paused && input_captured() && s_end==END_NONE && s_frame > 3;
+
+    if (!g_world_paused) {
+        if (opt_demo) demo_update(dt);
+        player_update(F, dt, allow);
+        entities_update_floor(F, dt);
+        fm_update(dt);
+        // false-exit trigger (final lobby only)
+        if (F->hasFalseExit && s_fex==FEX_NONE && s_end==END_NONE && player_in_box(F->falseExitArea))
+            start_false_exit();
+    }
+
+    Camera3D cam = player_camera();
+    if (!g_world_paused) interact_update(F, cam);
+
+    update_false_exit(dt);
+    update_ending(dt);
+    if (ui.captionTimer > 0) ui.captionTimer -= dt;
+
+    if (opt_selftest) run_selftest(s_runtime);
+    if (opt_endtest) run_endtest(s_runtime);
+
+    audio_update(dt);
+    telemetry_update(dt, g_world_paused, F->name);
+
+    // -- render --
+    render_world(F, cam);
+    BeginDrawing();
+    ClearBackground(BLACK);
+    render_post_to_screen();
+    draw_ui();
+    EndDrawing();
+
+    if (opt_screenshot[0] && s_frame == 40) capture_and_quit();
+    if (opt_record[0] && (s_frame % 2 == 0)) record_frame();
+    if (opt_quit_after > 0 && s_frame >= opt_quit_after) s_end = END_QUIT;
+}
+
 int main(int argc, char **argv) {
     const char *telem = NULL;
     int depthArg = 0; bool subFlag = false, endFlag = false;
@@ -296,70 +370,20 @@ int main(int argc, char **argv) {
 
     DisableCursor();
 
-    while (!WindowShouldClose() && s_end != END_QUIT) {
-        float dt = GetFrameTime();
-        if (dt > 0.1f) dt = 0.1f;
-        if (opt_record[0]) dt = 1.0f/60.0f;   // fixed timestep so capture speed is exact
-        s_runtime += dt; s_frame++;
-
-        bool scripted = opt_selftest || opt_endtest || opt_demo;
-
-        // -- input (skip while scripted) --
-        if (!scripted) {
-            if (IsKeyPressed(KEY_ESCAPE)) {
-                if (ui.noteOpen) close_note();
-                else if (IsCursorHidden()) EnableCursor();
-            }
-            if (IsKeyPressed(KEY_E)) {
-                if (ui.noteOpen) close_note();
-                else if (!g_world_paused && s_end==END_NONE) interact_activate(F);
-            }
-            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !IsCursorHidden() && !ui.noteOpen)
-                DisableCursor();
-        }
-
-        bool allow = !scripted && !g_world_paused && IsCursorHidden() && s_end==END_NONE && s_frame > 3;
-
-        if (!g_world_paused) {
-            if (opt_demo) demo_update(dt);
-            player_update(F, dt, allow);
-            entities_update_floor(F, dt);
-            fm_update(dt);
-            // false-exit trigger (final lobby only)
-            if (F->hasFalseExit && s_fex==FEX_NONE && s_end==END_NONE && player_in_box(F->falseExitArea))
-                start_false_exit();
-        }
-
-        Camera3D cam = player_camera();
-        if (!g_world_paused) interact_update(F, cam);
-
-        update_false_exit(dt);
-        update_ending(dt);
-        if (ui.captionTimer > 0) ui.captionTimer -= dt;
-
-        if (opt_selftest) run_selftest(s_runtime);
-        if (opt_endtest) run_endtest(s_runtime);
-
-        audio_update(dt);
-        telemetry_update(dt, g_world_paused, F->name);
-
-        // -- render --
-        render_world(F, cam);
-        BeginDrawing();
-        ClearBackground(BLACK);
-        render_post_to_screen();
-        draw_ui();
-        EndDrawing();
-
-        if (opt_screenshot[0] && s_frame == 40) capture_and_quit();
-        if (opt_record[0] && (s_frame % 2 == 0)) record_frame();
-        if (opt_quit_after > 0 && s_frame >= opt_quit_after) s_end = END_QUIT;
-    }
+#if defined(PLATFORM_WEB)
+    // The browser drives the frame clock; this never returns. Pointer lock and
+    // the audio context resume on the player's first canvas click (the shell
+    // shows a "click to descend" prompt for exactly that gesture).
+    emscripten_set_main_loop(update_draw_frame, 0, 1);
+#else
+    while (!WindowShouldClose() && s_end != END_QUIT)
+        update_draw_frame();
 
     telemetry_shutdown();
     audio_shutdown();
     render_shutdown();
     CloseAudioDevice();
     CloseWindow();
+#endif
     return 0;
 }
