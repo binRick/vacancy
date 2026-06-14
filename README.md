@@ -89,6 +89,31 @@ fights you — lives in **[GODOT_VS_RAYLIB.md](GODOT_VS_RAYLIB.md)**.
 
 ---
 
+## Performance summary
+
+All figures measured on one machine (Apple Silicon, macOS); full method and caveats
+are in [GODOT_VS_RAYLIB.md](GODOT_VS_RAYLIB.md).
+
+| Metric | Godot | raylib | |
+|---|---:|---:|:--|
+| Shipping binary | 68 MB | **1.7 MB** | ~40× smaller |
+| Cold start → first frame | ~0.6 s | **~0.4 s** | ~1.6× faster |
+| Peak memory (max RSS) | ~235 MB | **~90 MB** | ~2.6× less |
+| CPU per rendered frame | ~2.3 ms | **~0.35 ms** | ~6–7× lighter |
+| Frame rate (this scene) | 60 fps locked | 60 fps locked | tie |
+| CPU % at locked 60 fps | ~11–12% | ~11–12% | tie |
+
+**The honest read:** at a desktop 60 fps lock the two are a **wash** on frame rate
+and CPU% — both hold 60 trivially. raylib's wins are all in the *floor*, not the
+ceiling: a ~40× smaller binary, ~⅓ the memory, a faster start, and ~6–7× less CPU
+work per frame. That per-frame headroom is **latent** — invisible at 60 fps on a
+desktop, but decisive on weak/embedded hardware, at high refresh rates, or with far
+more on-screen geometry. (The eye-catching "~1,600 vs ~78 fps uncapped" is a macOS
+compositor artifact — raylib bypasses the display-refresh cap, Godot honors it —
+*not* a throughput result; see the comparison doc.)
+
+---
+
 ## How it plays
 
 | Input | Action |
